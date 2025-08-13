@@ -22,7 +22,7 @@ export const register = async (req: Request, res: Response) => {
       password: hashedPassword,
       role,
     });
-    const accessToken = generateToken(user._id.toString());
+    const accessToken = generateToken(user._id.toString(), role);
     const refreshToken = generateRefreshToken(user._id.toString());
     user.refreshToken = refreshToken;
     await user.save();
@@ -64,7 +64,7 @@ export const login = async (req: Request, res: Response) => {
       return;
     }
 
-    const accessToken = generateToken(existingUser._id.toString());
+    const accessToken = generateToken(existingUser._id.toString(), existingUser.role);
     const refreshToken = generateRefreshToken(existingUser._id.toString());
     existingUser.refreshToken = refreshToken;
     await existingUser.save();
@@ -123,7 +123,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     return;
   }
 
-  const newAccessToken = generateToken(user._id.toString());
+  const newAccessToken = generateToken(user._id.toString(), user.role);
   res.cookie("accessToken", newAccessToken, {
     httpOnly: true,
     sameSite: "lax",
