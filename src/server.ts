@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth";
 import eventsRoutes from "./routes/events";
 import cartRoutes from "./routes/cart";
+import ticketRoutes from "./routes/ticket";
 
 const app = express();
 
@@ -17,4 +18,5 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventsRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/tickets", ticketRoutes);
 export default app;
