@@ -293,3 +293,59 @@ export const getUserTickets = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const generateTicketPDF = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = (req.user as any)?.id;
+
+    // Validate ticket ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        message: "Invalid ticket ID format",
+      });
+    }
+
+    // Import PDFService here to avoid circular dependency
+    const { PDFService } = await import("../services/pdfService");
+
+    // Get ticket with full details
+    const ticketData = await PDFService.getTicketWithDetails(id, userId);
+
+    if (!ticketData) {
+      return res.status(404).json({
+        message: "Ticket not found or you don't have permission to access it",
+      });
+    }
+
+    // Check if payment was successful
+    if (ticketData.ticket.paymentStatus !== "succeeded") {
+      return res.status(400).json({
+        message: "Cannot generate PDF for unpaid ticket",
+      });
+    }
+
+    // Generate PDF
+    const pdfBuffer = await PDFService.generateTicketPDF(ticketData);
+
+    // Set response headers for PDF download
+    const filename = `ticket-${ticketData.ticket.ticketCode}.pdf`;
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    // Send PDF buffer
+    return res.send(pdfBuffer);
+
+  } catch (error: any) {
+    console.error("PDF generation error:", error);
+    return res.status(500).json({
+      message: "Internal server error during PDF generation",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};

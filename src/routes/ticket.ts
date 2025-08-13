@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireLogin } from "../middlewares/requireLogin";
 import { validate } from "../middlewares/validate";
-import { purchaseTicket, confirmPayment, getUserTickets } from "../controllers/ticket";
+import { purchaseTicket, confirmPayment, getUserTickets, generateTicketPDF } from "../controllers/ticket";
 import { purchaseTicketSchema } from "../validators/ticket";
 
 const router = Router();
@@ -12,6 +12,7 @@ router.use(requireLogin);
 router.post("/purchase", validate(purchaseTicketSchema), purchaseTicket);
 router.post("/confirm-payment", confirmPayment);
 router.get("/my-tickets", getUserTickets);
+router.get("/:id/pdf", generateTicketPDF);
 
 export default router;
 
@@ -269,4 +270,62 @@ export default router;
  *         description: Unauthorized - Authentication required
  *       500:
  *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /api/tickets/{id}/pdf:
+ *   get:
+ *     summary: Download ticket as PDF
+ *     tags: [Tickets]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Ticket ID
+ *     responses:
+ *       200:
+ *         description: PDF file generated and returned
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *         headers:
+ *           Content-Disposition:
+ *             description: Attachment with filename
+ *             schema:
+ *               type: string
+ *               example: 'attachment; filename="ticket-TK-ABC123.pdf"'
+ *           Content-Type:
+ *             description: MIME type
+ *             schema:
+ *               type: string
+ *               example: 'application/pdf'
+ *       400:
+ *         description: Bad request - Invalid ticket ID or unpaid ticket
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *       404:
+ *         description: Ticket not found or access denied
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Internal server error during PDF generation
  */
